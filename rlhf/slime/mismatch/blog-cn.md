@@ -199,19 +199,19 @@ $$\mathcal{L}_{\text{PPO-decoupled}}(\theta)
 </p>
 可以看到，在训练初期，随着模型学习且 Perplexity 下降，K3 KL 实际上下降了。但在 600 步之后，尽管训练和评估奖励保持稳定并未下降，K3 KL 指标却开始急剧上升，表明训练和 Rollout 之间的不匹配确实存在并且在训练后期会加大。
 
-在moe模型上，logits的diff会导致train和inference model选择不同的激活expert，会导致moe的train inference mismatch显著大于dense model （虽然在。在qwen30b-a3b上未崩溃情况下k3 kl的量级和qwen3 4b类似，可能），我们成功找到了模型因为train inference崩溃的现象 (实验setting除基座模型之外与dense相同）。以下是一些具体的实验结果 [TODO add some pic]
+在 MoE 模型上，logits 的 diff 会导致训练和推理模型选择不同的激活 expert，会导致 MoE 的 train-inference mismatch 显著大于 Dense 模型（虽然在 Qwen30B-A3B 上未崩溃情况下 K3 KL 的量级和 Qwen3-4B 类似，可能），我们成功找到了模型因为 train-inference 崩溃的现象（实验设置除基座模型之外与 Dense 相同）。以下是一些具体的实验结果 [TODO add some pic]
 
-在320步附近，首先出现了grad norm下降 （~0.07 -> ~0.02） 这通常是崩溃的前兆。然后reward骤降，k3 kl陡然上升。尽管后面reward重新恢复到正常水平，但是此时的grad norm已然异常，所以我们可以认为此时训练已经崩溃。
+在 320 步附近，首先出现了 grad norm 下降（~0.07 -> ~0.02），这通常是崩溃的前兆。然后 reward 骤降，K3 KL 陡然上升。尽管后面 reward 重新恢复到正常水平，但是此时的 grad norm 已然异常，所以我们可以认为此时训练已经崩溃。
 
 [TODO: 可能对一些metric 比如ratio max /min 做更具体的展示？]
 
 
 
-### 在mismatch小的情况下  IS 不会损害 Performance
+### 在 mismatch 小的情况下，IS 不会损害 Performance
 
->  qwen3-4b 完整的 wandb log 参考[此处](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b)。
+> Qwen3-4B 完整的 wandb log 参考[此处](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b)。
 
-我们在qwen3-4b的实验中，验证了启用 TIS/MIS（包括几种常用配置）并不会降低性能或破坏训练稳定性。为了证明这一点，我们在训练开始时启用了不同的 IS 相关选项，并将其与未进行 IS 修正的基线进行了对比。
+我们在 Qwen3-4B 的实验中，验证了启用 TIS/MIS（包括几种常用配置）并不会降低性能或破坏训练稳定性。为了证明这一点，我们在训练开始时启用了不同的 IS 相关选项，并将其与未进行 IS 修正的基线进行了对比。
 我们评估了以下四种配置：
 
 1.  Baseline（基线）
@@ -242,18 +242,18 @@ $$\mathcal{L}_{\text{PPO-decoupled}}(\theta)
 
 
 
-### 在mismatch大的情况下，TIS/MIS可以解决崩溃
+### 在 mismatch 大的情况下，TIS/MIS 可以解决崩溃
 
-> qwen30bA3b 的 完整wandb log 请看[此处](https://api.wandb.ai/links/peiranxu_org/5rx2wvfu) 
+> Qwen30B-A3B 的完整 wandb log 请看[此处](https://api.wandb.ai/links/peiranxu_org/5rx2wvfu) 
 >
 > ckpt 地址请看 此处 [TODO]
 
-在qwen30b3b中，我们取300 steps的ckpt续训 在不同的tis/mis setting下进行续训。我们发现合理设置的its + mis可以有效抑制因为train-inference mismatch导致的崩溃。我们在4组setting上进行了实验
+在 Qwen30B-A3B 中，我们取 300 steps 的 ckpt 续训，在不同的 TIS/MIS setting 下进行续训。我们发现合理设置的 TIS + MIS 可以有效抑制因为 train-inference mismatch 导致的崩溃。我们在 4 组 setting 上进行了实验
 
-* config 1: token tis[0.5, 2.0] + geometric mis [0.99, 1.001] + batch norm --> 依然崩溃
-* config 2: token tis[0.5, 2.0] + geometric mis [0.99, 1.001] + batch norm --> 未崩溃
-* config 3: token tis[0.5, 2.0] + geometric mis [0.99, 1.001] --> 未崩溃
-* config 4: token tis[0.5, 2.0] --> 崩溃
+* config 1: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> 依然崩溃
+* config 2: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> 未崩溃
+* config 3: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] --> 未崩溃
+* config 4: token TIS [0.5, 2.0] --> 崩溃
 
 [TODO: add some pics]
 
