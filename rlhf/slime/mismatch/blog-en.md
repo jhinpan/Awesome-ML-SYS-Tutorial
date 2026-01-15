@@ -314,9 +314,9 @@ We also examined the K3 KL divergence for these runs. We observed that across al
 In Qwen30B-A3B, we took a checkpoint from 300 steps and continued training with different TIS/MIS settings. We found that properly configured TIS + MIS can effectively suppress collapse caused by train-inference mismatch. We conducted experiments with 4 different settings:
 
 * config 1: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> still collapsed
-* config 2: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> did not collapse
-* config 3: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] --> did not collapse
-* config 4: token TIS [0.5, 2.0] --> collapsed
+* config 2: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] + batch norm --> did not collapse
+* config 3: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] --> did not collapse
+* config 4: token TIS [0.5, 1.5] --> collapsed
 
 <!-- [TODO: add some pics] -->
 
@@ -427,7 +427,7 @@ Any mismatch solving tool can be found in Miles (or its upstream Miles)!
 
 Bytedance Inc: Yingru Li, Jiacai Liu, Yuxuan Tong, Qian Liu, Hongyu Lu, Ziheng Jiang
 
-SGLang RL Team: Changyi Yang, Zhuohao Li, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
+SGLang RL Team: Changyi Yang, Zhuohao Li, Nan Jiang, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
 
 RadixArk Miles Team: Chenyang Zhao, Mao Cheng, Yueming Yuan, Jiajun Li, Banghua Zhu, Tom, Yusheng Su
 
