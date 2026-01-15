@@ -427,7 +427,7 @@ Any mismatch solving tool can be found in Miles (or its upstream Miles)!
 
 Bytedance Inc: Yingru Li, Jiacai Liu, Yuxuan Tong, Qian Liu, Hongyu Lu, Ziheng Jiang
 
-SGLang RL Team: Changyi Yang, Zhuohao Li, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
+SGLang RL Team: Changyi Yang, Zhuohao Li, Nan Jiang, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
 
 RadixArk Miles Team: Chenyang Zhao, Mao Cheng, Yueming Yuan, Jiajun Li, Banghua Zhu, Tom, Yusheng Su
 
