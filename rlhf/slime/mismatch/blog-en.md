@@ -314,9 +314,9 @@ We also examined the K3 KL divergence for these runs. We observed that across al
 In Qwen30B-A3B, we took a checkpoint from 300 steps and continued training with different TIS/MIS settings. We found that properly configured TIS + MIS can effectively suppress collapse caused by train-inference mismatch. We conducted experiments with 4 different settings:
 
 * config 1: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> still collapsed
-* config 2: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> did not collapse
-* config 3: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] --> did not collapse
-* config 4: token TIS [0.5, 2.0] --> collapsed
+* config 2: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] + batch norm --> did not collapse
+* config 3: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] --> did not collapse
+* config 4: token TIS [0.5, 1.5] --> collapsed
 
 <!-- [TODO: add some pics] -->
 
