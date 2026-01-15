@@ -275,7 +275,7 @@ We also examined the K3 KL divergence for these runs. We observed that across al
 
 ### When Mismatch is Large, TIS/MIS Can Solve Collapse
 
-> Full wandb log for Qwen30B-A3B can be found [here](https://wandb.ai/miles-public/slime-dapo) 
+> Full wandb log for Qwen30B-A3B can be found [here](https://wandb.ai/miles-public/slime-dapo/reports/Training-inference-Mismatch-MoE-Experiement--VmlldzoxNTYzMTYxOQ) 
 >
 > ckpt address can be found here [here](https://huggingface.co/collections/zhuohaoli/qwen3-30b-a3b-base-mismatch)
 
