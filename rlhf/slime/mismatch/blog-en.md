@@ -242,9 +242,9 @@ We further ensure the situation by continuing the training based on the last che
 
 ### When Mismatch is Small, IS Won't Harm Performance
 
-> Full wandb log for Qwen3-4B can be found [here](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b).
+> Full wandb log for Qwen3-4B-Base can be found [here](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b).
 
-In our Qwen3-4B experiments, we verified that enabling TIS/MIS (including several commonly used configurations) does not degrade performance or destabilize training. To demonstrate this, we enabled different IS-related options at the beginning of training and compared them against a baseline with no IS correction.
+In our Qwen3-4B-Base experiments, we verified that enabling TIS/MIS (including several commonly used configurations) does not degrade performance or destabilize training. To demonstrate this, we enabled different IS-related options at the beginning of training and compared them against a baseline with no IS correction.
 Below are the four configurations we evaluated:
 
 1. Baseline
