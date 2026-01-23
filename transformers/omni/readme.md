@@ -3,7 +3,7 @@
 最近在研究 [SGLang Omni 的 RFC](https://github.com/sgl-project/sglang/issues/16546)，感谢桂神、帅还有超哥提出的整体架构。乘此良机，扩展下自身对 Omni 的认知。这篇文章一方面记录我理解的 Omni 架构，同时斗胆提出一个尚未完全验证的 Omni 音频输出的优化方案。
 
 <div style="text-align: center;">
-  <img src="./omni_architecture.png" alt="Omni Architecture" style="width:50%;">
+  <img src="./Qwen2.5-Omni.png" alt="Omni Architecture" style="width:50%;">
 </div>
 
 ## 架构概念
