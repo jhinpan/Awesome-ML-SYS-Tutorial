@@ -63,7 +63,7 @@ To validate the necessity of QAT and study the impact of train–infer precision
 
 We measure train–infer inconsistency using the absolute difference in log probabilities (Logprob Abs Diff).
 
-<img src="figs/moonlight-1.png" alt="Rollout BF16, training-side comparison of QAT INT4 effect" style="zoom:25%;" /> <img src="figs/moonlight-2.png" alt="Rollout INT4 weight-only, training-side comparison of QAT INT4 effect" style="zoom:25%;" />
+<img src="figs/moonlight-1.png" alt="Rollout BF16, training-side comparison of QAT INT4 effect" width="45%" /> <img src="figs/moonlight-2.png" alt="Rollout INT4 weight-only, training-side comparison of QAT INT4 effect" width="45%" />
 
 **The left plot shows “QAT INT4 training + BF16 rollout”** (the **red curve**). Interestingly, even with high-precision BF16 inference, the error remains significantly higher. This is because QAT has already adapted weights to INT4 quantization noise via “compensation”; if we remove quantization at inference, that compensation becomes a perturbation, causing **distribution shift**.
 
@@ -110,13 +110,13 @@ During RL rollout, we directly reuse SGLang’s mature W4A16 quantization soluti
 
 - **Training side**
 
-<img src="figs/image%201.png" alt="Qwen3-235B-A22B Raw-Reward comparison" style="zoom:25%;" /> <img src="figs/image%202.png" alt="Kimi-K2-Thinking Raw-Reward comparison" style="zoom:25%;" />
+<img src="figs/image%201.png" alt="Qwen3-235B-A22B Raw-Reward comparison" width="45%"  /> <img src="figs/image%202.png" alt="Kimi-K2-Thinking Raw-Reward comparison" width="45%"  />
 
 The plots above show training performance on the dapo-math-17k dataset for Qwen3-235B-A22B and Kimi-K2-Thinking under the slime framework. Compared with **“BF16 train–BF16 infer”** and **“BF16 train–FP8 infer”**, the **“BF16 train–INT4 infer”** setup still achieves steady Raw-Reward growth with a trend largely consistent with the former two, demonstrating the effectiveness of this approach.
 
 - **Evaluation side**
 
-<img src="figs/image%203.png" alt="Qwen3-235B-A22B AIME evaluation comparison" style="zoom:25%;" /> <img src="figs/image%204.png" alt="Kimi-K2-Thinking AIME evaluation comparison" style="zoom:25%;" />
+<img src="figs/image%203.png" alt="Qwen3-235B-A22B AIME evaluation comparison" width="45%"  /> <img src="figs/image%204.png" alt="Kimi-K2-Thinking AIME evaluation comparison" width="45%"  />
 
 To evaluate model capability more rigorously, we run an evaluation on the aime-2024 benchmark every 10 training steps. The plots show the scoring trajectories of Qwen3-235B-A22B and Kimi-K2-Thinking under different RL training configurations.
 
@@ -124,7 +124,7 @@ The experiments indicate that the **“BF16 train–INT4 infer”** scheme not o
 
 ### Train–Infer Gap
 
-<img src="figs/image%205.png" alt="Qwen3-30B-A3B train–infer gap comparison" style="zoom:25%;" /> <img src="figs/image%206.png" alt="Qwen3-235B-A22B train–infer gap comparison" style="zoom:25%;" />
+<img src="figs/image%205.png" alt="Qwen3-30B-A3B train–infer gap comparison" width="45%"  /> <img src="figs/image%206.png" alt="Qwen3-235B-A22B train–infer gap comparison" width="45%"  />
 
 To visualize effectiveness, we validated QAT RL training on Qwen3-30B and Qwen3-235B. The Y-axis shows the absolute logprob difference between training-side and inference-side outputs; lower values mean stronger consistency. Results show that INT4 (**green dashed**) almost overlaps with the BF16 baseline (**red solid**), and is significantly lower than FP8 (**blue dashed**). This confirms that INT4 QAT can effectively avoid the accuracy loss in the **“BF16 train–FP8 infer”** mode and achieve train–infer behavior indistinguishable from full precision.
 
