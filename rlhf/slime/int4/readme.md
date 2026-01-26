@@ -2,13 +2,18 @@
 
 > 💡 **TL;DR:**
 >
-> 受 Kimi K2 团队启发，SGLang RL 团队联合 slime 社区成功落地了 INT4 **量化感知训练（QAT）** 流程方案。通过“训练端伪量化 + 推理端真实量化(W4A16)”的方案组合，我们实现了媲美 BF16 全精度训练的稳定性与训推一致性，同时 INT4 极致压缩也将 1TB 级超大模型的采样任务容纳于单机之上，消除了跨机通信瓶颈，显著提高了 Rollout 效率，为社区提供了兼顾高性能与低成本的开源参考。
+> 受 Kimi K2 团队启发，SGLang RL 团队成功落地了 INT4 **量化感知训练（QAT）** 流程方案。通过“训练端伪量化 + 推理端真实量化（W4A16）”的方案组合，我们实现了媲美 BF16 全精度训练的稳定性与训推一致性，同时 INT4 极致压缩也将 1TB 级超大模型的采样任务容纳于单机 H200 (141G) 显存内，消除了跨机通信瓶颈，显著提高了 Rollout 效率，为社区提供了兼顾高性能与低成本的开源参考。
 
-近期，SGLang RL 团队联合 slime 社区，在强化学习的训练稳定性与加速方面取得了重要进展：
+近期，SGLang RL 团队，slime 社区，蚂蚁集团 Asystem & 阿福 Infra 团队与 RadixArk 团队，在强化学习的训练稳定性，训练效率与适用场景方面取得了重要进展，具体包括：
 
+
+- **INT4 QAT RL 全流程实践**：我们实现了从训练到推理的完整 QAT INT4 闭环的方案，并提供了详细的[技术方案](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/int4/readme.md)，显著提升了 Rollout 的效率与稳定性。
+- **统一 multi-turn VLM/LLM 多轮采样范式**：我们提供了 VLM 多轮采样范式的实现 [blog](hhttps://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/vlm-multi-turn/readme.md)，开发者只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习。
+- **Multi-Agent Training**：得益于采样函数的优秀解耦设计，我们发布了多智能体强化学习（Multi-Agent RL）的方案 [MrlX](https://github.com/AQ-MedAI/MrlX)，为社区提供了协同训练的典型方案。
 - **稳定性提升**：我们实现了 **[Rollout Router Replay](https://github.com/THUDM/slime/blob/58525eb986c66a271aa31077e17b8afebe704b4f/tests/test_qwen3_30B_A3B_r3.py#L79)** 机制，显著提升了 MoE 模型在 RL 训练过程中的稳定性。
 - **低精度训练**：我们在 RL 场景中成功实现了 **[全流程 FP8 训练与采样](https://lmsys.org/blog/2025-11-25-fp8-rl/)**，进一步释放了硬件性能。
 - **投机采样**：我们在 RL 场景中成功实践了 **[投机采样](https://thudm.github.io/slime/advanced/speculative-decoding.html)**，实现了大规模训练的无损加速。
+
 
 在此基础上，我们更进一步，在 slime 框架上成功复现并落地了 **[INT4 量化感知训练（QAT）](https://github.com/THUDM/slime/blob/58525eb986c66a271aa31077e17b8afebe704b4f/scripts/low_precision/run-kimi-k2-Thinking-int4.sh)** **全**流程方案。该方案深受 Kimi 团队 K2-Thinking 技术报告中关于 [**W4A16 QAT (Quantization-Aware Training)**](https://www.zhihu.com/question/1969558404759544488/answer/1970539327902679960) 实践的启发。为了致敬先行者并回馈社区，本文将详细**剖析**我们在开源生态中打通全流程的技术细节，旨在为社区提供一份兼顾稳定性与性能的可落地参考。
 
@@ -18,9 +23,7 @@
 - **训推一致**：训练端利用 QAT 确保权重符合 INT4 分布，推理端执行 W4A16 (Weights INT4, activations BF16 ) 计算；二者均通过 BF16 Tensor Core 进行运算，实现了媲美 BF16 全精度的训推一致性。
 - **单机效率倍增**：在超大模型场景下，INT4 策略大幅降低了显存与带宽压力，Rollout 效率显著超越 W8A8 (Weights FP8 , Activations FP8）。
 
-本项目由 **SGLang RL 团队、 InfiXAI 团队、蚂蚁集团 Asystem & 阿福 Infra 团队，slime 团队与 RadixArk** 联合完成。
-
----
+本项目由 **SGLang RL 团队、 InfiXAI 团队、蚂蚁集团 Asystem & 阿福 Infra 团队，slime 团队与 RadixArk 团队**联合完成。相关功能与 recipe 已经同步到了 [slime](https://github.com/THUDM/slime) 与 [Miles](https://github.com/radixark/miles) 社区，欢迎大家试用与贡献。我们也在更进一步向 MXFP8 与 NVFP4 发起挑战。
 
 ## 技术方案概览
 
