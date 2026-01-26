@@ -1,4 +1,4 @@
-# SGLang RL x slime: INT4 QAT RL 全流程实践
+# 致敬 Kimi K2：基于 slime 的全流程 INT4 量化感知训练方案
 
 > 💡 **TL;DR:**
 >
@@ -8,7 +8,7 @@
 
 
 - **INT4 QAT RL 全流程实践**：我们实现了从训练到推理的完整 QAT INT4 闭环的方案，并提供了详细的[技术方案](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/int4/readme.md)，显著提升了 Rollout 的效率与稳定性。
-- **统一 multi-turn VLM/LLM 多轮采样范式**：我们提供了 VLM 多轮采样范式的实现 [blog](hhttps://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/vlm-multi-turn/readme.md)，开发者只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习。
+- **Unified multi-turn VLM/LLM 多轮采样范式**：我们提供了 VLM 多轮采样范式的实现 [blog](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/vlm-multi-turn/readme.md)，开发者只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习。
 - **Multi-Agent Training**：得益于采样函数的优秀解耦设计，我们发布了多智能体强化学习（Multi-Agent RL）的方案 [MrlX](https://github.com/AQ-MedAI/MrlX)，为社区提供了协同训练的典型方案。
 - **稳定性提升**：我们实现了 **[Rollout Router Replay](https://github.com/THUDM/slime/blob/58525eb986c66a271aa31077e17b8afebe704b4f/tests/test_qwen3_30B_A3B_r3.py#L79)** 机制，显著提升了 MoE 模型在 RL 训练过程中的稳定性。
 - **低精度训练**：我们在 RL 场景中成功实现了 **[全流程 FP8 训练与采样](https://lmsys.org/blog/2025-11-25-fp8-rl/)**，进一步释放了硬件性能。
@@ -31,8 +31,9 @@
 
 我们实现了从训练到推理的完整 QAT INT4 闭环的方案，如下图所示：
 
-![QAT INT4 全流程](figs/jemg.jpg)
-
+<div align="center">
+  <img src="figs/QAT-INT4-e2e.png" alt="QAT INT4 全流程" width="80%"  />
+</div>
 
 在 **QAT 训练阶段**，训练侧在维护 BF16 主权重（Master Weights）的基础上，前向传播通过**伪量化（Fake Quantization）** 引入量化噪声。所谓 “伪”，是指该步骤并未真正将 BF16 数据类型转换为低精度的 INT4，而是保持浮点计算路径不变，通过插入 **量化再反量化（Quant-Dequant）** 操作来模拟低精度的计算。具体而言，高精度权重在经过“离散化映射到INT4”后被立即还原，虽然其物理存储格式仍为浮点，但数值精度已实质性降低。这种原值与还原值之间的差异引入了量化误差，在数学上等效于向网络注入了噪声，迫使模型在训练阶段就通过梯度更新去适应这种精度损失。
 
@@ -52,7 +53,9 @@
 
 ### Fake Quantization 与 STE 实现
 
-![训练侧 Fake Quantization & STE](figs/phase_1_pages-to-jpg-0002.jpg)
+<div align="center">
+  <img src="figs/fake-quantize-STE.png" alt="训练侧 Fake Quantization & STE" width="80%"  />
+</div>
 
 这一阶段的核心目标是在训练过程中实时模拟量化误差，迫使模型“学会”适应低精度表示。为此，我们采用了 **Fake Quantization** 机制：尽管权重在存储和更新时仍保持高精度的 BF16 格式，但在前向传播的实际计算中，会被暂时映射到 INT4 的精度范围参与运算。
 
@@ -62,7 +65,11 @@
 
 为了验证 QAT 方案的必要性，并探究训练与推理精度不匹配带来的具体影响，我们设计了一组消融实验，分别在“**开启 QAT INT4 训练，BF16 Rollout**”和“**关闭 QAT 训练，直接进行 INT4 Rollout**”两种非对称场景下进行了测试，并以对数概率绝对差值（Logprob Abs Diff）作为训推不一致的观测指标。
 
-<img src="figs/moonlight-1.png" alt="Rollout 侧 BF16，训练侧对比 QAT INT4 效果" width="45%"  /> <img src="figs/moonlight-2.png" alt="Rollout 侧 INT4 Weight Only，训练侧对比 QAT INT4 效果" width="45%"  />
+
+<div align="center">
+  <img src="figs/moonlight-1.png" alt="Rollout 侧 BF16，训练侧对比 QAT INT4 效果" width="45%"  /> 
+  <img src="figs/moonlight-2.png" alt="Rollout 侧 INT4 Weight Only，训练侧对比 QAT INT4 效果" width="45%"  />
+</div>
 
 
 **左图展示了“开启 QAT INT4 训练，BF16 Rollout”的场景**（即**红线**部分）。可以看到，即使我们使用了高精度的 BF16 进行推理，误差依然显著偏高。这是因为在 QAT 过程中，模型权重已经针对 INT4 的量化噪声进行了“适应性调整”或补偿；推理时若移除量化步骤，这种补偿反而成为扰动，导致特性**分布偏移（Distribution Shift）**。
@@ -75,8 +82,9 @@
 
 ### 权重流转与动态格式适配
 
-![SGLang 侧权重处理流程](figs/marlin_optimization_pages-to-jpg-0001.jpg)
-
+<div align="center">
+  <img src="figs/marlin_optimization.jpg" alt="SGLang 侧权重处理流程" width="80%"  />
+</div>
 
 为了复用 SGLang 在推理端已有的优化，我们直接采用了其内置的 **Marlin Kernel** 作为 INT4 的推理方案。然而，这在工程落地时我们遇到了显著的“格式鸿沟”：QAT 训练产出的是类似 Hugging face 上的标准格式权重，而 SGLang 推理引擎的 Marlin Kernel 则强制要求权重必须经过特定的打包（Pack）与重排（Permute）处理，方能被 Kernel 高效读取。
 
@@ -86,7 +94,9 @@
 
 ### 权重更新时的量化
 
-![权重更新](figs/phase_2_pages-to-jpg-0001.jpg)
+<div align="center">
+  <img src="figs/weights-update.jpg" alt="权重更新" width="80%"  />
+</div>
 
 
 进入核心的 **Real Quantization** 环节。不同于训练时的 Fake Quantization，这一步通过代码中的 `int4_block_quantize` 函数执行不可逆的精度压缩操作：基于设定的 Group Size，计算每组权重的缩放因子（Scale），并将高精度浮点数映射到 `[-7, 7]` 的 INT4 整数域。
@@ -95,7 +105,9 @@
 
 ## 推理阶段
 
-![SGLang W4A16 推理](figs/image.png)
+<div align="center">
+  <img src="figs/sglang-w4a16.png" alt="SGLang W4A16 推理" width="80%"  />
+</div>
 
 
 **极简打包与零开销解包**
@@ -113,14 +125,20 @@
 
 - **训练侧**
 
-<img src="figs/image%201.png" alt="Qwen3-235B-A22B Raw-Reward对比" width="45%"  /> <img src="figs/image%202.png" alt="Kimi-K2-Thinking Raw-Reward对比" width="45%"  />
+<div align="center">
+  <img src="figs/qwen3-235b-raw-reward.png" alt="Qwen3-235B-A22B Raw-Reward对比" width="45%"  /> 
+  <img src="figs/kimi-k2-raw-reward.png" alt="Kimi-K2-Thinking Raw-Reward对比" width="45%"  />
+</div>
 
 
 上图展示了基于 slime 框架，Qwen3-235B-A22B 与 Kimi-K2-Thinking 模型在 dapo-math-17k 数据集上的训练表现。通过对比实验发现，相较于 **“BF16训-BF16推”** 及 **“BF16训-FP8推”**，**“BF16训-INT4推”** 配置下的 Raw-Reward 仍能保持稳健增长，且其增长趋势与前两者基本一致，证明了该方案在训练过程中的有效性。
 
 - **评估侧**
 
-<img src="figs/image%203.png" alt="Qwen3-235B-A22B AIME数据集评估对比" width="45%"  /> <img src="figs/image%204.png" alt="Kimi-K2-Thinking AIME数据集评估对比" width="45%"  />
+<div align="center">
+  <img src="figs/qwen3-235b-AIME.png" alt="Qwen3-235B-A22B AIME数据集评估对比" width="45%"  /> 
+  <img src="figs/kimi-k2-AIME.png" alt="Kimi-K2-Thinking AIME数据集评估对比" width="45%"  />
+</div>
 
 
 为了更加严谨地评估模型能力的演进，我们每隔 10 个训练步长就在 aime-2024 基准测试集上进行一次评估。上图给出了 Qwen3-235B-A22B 与 Kimi-K2-Thinking 在不同 RL 训练配置下的模型评分增长轨迹。
@@ -129,26 +147,27 @@
 
 ### 训推差异
 
-<img src="figs/image%205.png" alt="Qwen3-30B-A3B 训推差异对比" width="45%"  /> <img src="figs/image%206.png" alt="Qwen3-235B-A22B 训推差异对比" width="45%"  />
+<div align="center">
+<img src="figs/qwen3-30b-train-infer-gap.png" alt="Qwen3-30B-A3B 训推差异对比" width="45%"  /> <img src="figs/qwen3-235b-train-infer-gap.png" alt="Qwen3-235B-A22B 训推差异对比" width="45%"  />
+</div>
 
 为了直观评估方案效果，我们在 Qwen3-30B 与 Qwen3-235B 模型上进行了的 QAT RL 训练验证。图中 Y 轴反映了训练侧与推理侧输出的 Logprob 绝对差值，数值越低意味一致性越强。实验结果显示，INT4（**绿色虚线**）与BF16 基准（**红色实线**）呈现出惊人的重合度，且显著低于表现出较高误差水平的 FP8（**蓝色虚线**）。这证实了 INT4 QAT 策略能有效规避 **“BF16训-FP8 推”** 模式下的精度损失，实现与全精度无异的训推表现。
 
 **这种一致性背后的原因我们推测为两点：**
 
-- 截断误差抑制：训练侧的 Fake Quantization 将权重限制在 INT4 值域内。这种数值范围的约束，[有效降低了矩阵乘法中 Accumulator 累加时因并行计算顺序不确定性引发的浮点舍入误差（Floating-point Rounding Error），即改善了所谓的“大数加小数”精度丢失问题。](https://www.zhihu.com/question/1969558404759544488/answer/1970539327902679960)
+- 截断误差抑制：训练侧的 Fake Quantization 将权重限制在 INT4 值域内。这种数值范围的约束，有效降低了矩阵乘法中 Accumulator 累加时因并行计算顺序不确定性引发的浮点舍入误差（Floating-point Rounding Error），即改善了所谓的“大数加小数”精度丢失问题。[reference](https://www.zhihu.com/question/1969558404759544488/answer/1970539327902679960)
 - 高精度计算：推理侧采用 W4A16 模式，其核心计算全程基于 **BF16 Tensor Core** 进行，确保了运算精度与训练阶段的高度对齐。
 
 ### Rollout 加速
 
-![Qwen3-235B-A22B Rollout 性能对比](figs/image%207.png)
-
+<div align="center">
+  <img src="figs/qwen3-235b-rollout-performance.png" alt="Qwen3-235B-A22B Rollout 性能对比" width="45%"  />
+  <img src="figs/kimi-k2-rollout-performance.png" alt="Kimi-K2-Thinking Rollout 性能对比" width="45%"  />
+</div>
 
 从 Qwen3-235B 的 Rollout 性能对比图中可以直观看到，虽然 INT4（**绿色点划线**）与 FP8（**蓝色虚线**）均较 BF16 基线（**红色实线**）实现了显著加速，但两者彼此之间并未拉开巨大的性能鸿沟。这一现象主要受限于当前的硬件特性：由于 NVIDIA H 系列 GPU 没有原生的 INT4 Tensor Core， W4A16 方案本质上利用的还是 BF16 Tensor Core 进行计算，虽然大幅降低了显存带宽压力，但在吞吐上无法像 W8A8 一样利用原生 FP8 Tensor Core 进行加速从而获得计算增益。因此，在单步推理耗时上，INT4 仅表现出微弱的优势，与 FP8 基本处于同一性能梯队。
 
-![Kimi-K2-Thinking Rollout 性能对比](figs/image%208.png)
-
-
-对于Kimi-K2-Thinking Rollout 性能的对比。首先观察双节点场景下的**通信瓶颈**：图中 FP8（**红线**）与 INT4（**蓝线**）呈现出相似的水平。因为 H 系列 GPU 缺乏原生的 INT4 计算单元，INT4 无法在计算层面提供加速，因此整体性能依然受限于跨节点的通信带宽。
+对于 Kimi-K2-Thinking Rollout 性能的对比，首先观察双节点场景下的**通信瓶颈**：图中 FP8（**红线**）与 INT4（**蓝线**）呈现出相似的水平。因为 H 系列 GPU 缺乏原生的 INT4 计算单元，INT4 无法在计算层面提供加速，因此整体性能依然受限于跨节点的通信带宽。
 
 然而，**绿线**所代表的单节点表现揭示了 INT4 的**真正价值——显存压缩**。通过将模型体积减半，我们成功将 1TB 级别的超大模型完整加载至单机显存中。这直接消除了昂贵的跨机通信开销，将 Rollout 耗时大幅缩减。这有力地证明，在当前硬件环境下，INT4 QAT 的核心收益在于通过压缩显存，解锁了高效的单机部署 Rollout 方案。
 
@@ -164,11 +183,11 @@
 - **训练端效率优化**：目前，由于在训练过程中引入了 QAT Fake Quantization 计算，带来了较大的额外性能开销，导致训练速度明显低于 BF16 模式。这在一定程度上折损了 Rollout 阶段带来的端到端性能收益。我们后续计划提出一套全新的优化方案，旨在解决这一训练侧的效率瓶颈，实现全链路的加速。
 - **推理侧 FP4**： 随着 NVIDIA Blackwell 架构的逐步普及，我们将积极探索 FP4 精度在 RL 训练与推理中的应用可行性，以期进一步挖掘硬件潜力。
 
-slime 在 QAT INT4 的尝试不仅证明了在开源生态中复现工业界前沿方案的可行性，也为超大规模模型的低成本训练探索了新的路径。我们期望这套方案助力更多开发者深入理解 QAT 技术，并推动其在 RL 场景下的实际落地与广泛应用。
+我们在 QAT INT4 的尝试不仅证明了在开源生态中复现工业界前沿方案的可行性，也为超大规模模型的低成本训练探索了新的路径。我们期望这套方案能够助力更多开发者深入理解 QAT 技术，并推动其在 RL 场景下的实际落地与广泛应用。
 
 ## 致谢
 
-SGLang RL Team：JiLi, Yefei Chen, Xi Chen, BBuf, Chenyang Zhao
+SGLang RL Team：Ji Li, Yefei Chen, Xi Chen, BBuf, Chenyang Zhao
 
 InfiXAI Team：Mingfa Feng, Congkai Xie, Shuo Cai
 
