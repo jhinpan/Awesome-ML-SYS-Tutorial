@@ -4,6 +4,8 @@
 >
 > Inspired by the Kimi K2 team, the SGLang RL team successfully landed an INT4 **Quantization-Aware Training (QAT)** pipeline. By combining **fake quantization during training** with **real quantization at inference (W4A16)**, we achieved stability and train–infer consistency comparable to BF16 full-precision training. Meanwhile, extreme INT4 compression allows single-node rollout for ~1TB-scale models, eliminating cross-node communication bottlenecks and significantly improving rollout efficiency—an open-source reference that balances high performance and low cost.
 
+## Introduction
+
 Recently, the SGLang RL team has made significant progress in RL training stability, efficiency, and application scenarios, including:
 
 - **INT4 QAT End-to-End Training**: We implemented a complete QAT INT4 closed-loop solution from training to inference and provided a detailed [technical recipe](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/int4/readme-en.md), significantly improving rollout efficiency and stability.
