@@ -154,28 +154,7 @@ As the demand for multimodal agentic AI training grows, we need our VLM multi-tu
 
 Xiaole Guo, Nan Jiang, Zilin Zhu, Jin Pan, Jiajun Li, Yuzhe Zhou, Chengxing Xie, Yueming Yuan, Chenyang Zhao
 
-<style>
-details summary {
-  list-style: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-details summary::before {
-  content: "▶";
-  display: inline-block;
-  margin-right: 8px;
-  transition: transform 0.2s;
-  vertical-align: middle;
-}
-details[open] summary::before {
-  transform: rotate(90deg);
-}
-details summary h1 {
-  margin: 0;
-  display: inline;
-}
-</style>
+
 <details>
 <summary><h2>Engineering Appendix</h2></summary>
 
