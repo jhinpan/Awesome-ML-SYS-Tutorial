@@ -1,11 +1,6 @@
 # One Rollout to Rule Them All: Seamless Multi-Turn RL for LLM and VLM
 
-## TL;DR
-
-<aside>
-💡
-
-我们在 slime 上实现了 LLM 与 VLM 训练范式的真正统一。得益于优秀的解耦设计，开发者现在只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习（Agentic Multi-turn RL）。
+> 💡 **TL;DR:** 我们在 slime 上实现了 LLM 与 VLM 训练范式的统一。得益于优秀的解耦设计，开发者现在只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习（Agentic Multi-turn RL）。
 
 </aside>
 
@@ -45,7 +40,9 @@ VLM 与 LLM 的多轮采样并无本质区别，只需要在在每一轮交互�
     - env done: 环境在 `env.step()` 中返回 `done=True`，表示任务已完成或无法继续（例如已得到最终判定、进入终止状态等），rollout 立即停止，不再追加后续轮次。
     
 
-<img src="./pic/multi-turn.png" alt="multi-turn" style="width: 100%; height: auto; margin: 20px 0;">
+<div align="center">
+  <img src="./pic/multi-turn.png" alt="multi-turn" width="80%"  />
+</div>
 
 ```python
 # Pseudocode: custom multi-turn rollout.generate 
@@ -98,11 +95,13 @@ async def generate(args, sample, sampling_params):
 # 实验结果
 
 基于上述设计，我们使用 [geo3k 多模态数据集](https://huggingface.co/datasets/VeraIsHere/geo3k_imgurl_processed)，对 `Qwen3-VL-2B-Instruct` 进行了 Agentic Multi-Turn GRPO Training，用 Megatron-LM 作为训练后端（具体可参考[训练脚本](https://github.com/THUDM/slime/blob/main/examples/geo3k_vlm_multi_turn/run_geo3k_vlm_multi_turn.py)）。实验效果如下：
-<img src="./pic/short-turn-rollout.png" alt="short-turn-rollout" style="width: 100%; height: auto; margin: 20px 0;">
-<div style="display: flex; gap: 10px; width: 100%; margin: 20px 0;">
-  <img src="./pic/short-turn-effective-tokens.png" alt="short-turn-effective-tokens" style="width: 30%; height: auto;">
-  <img src="./pic/short-turn-train-time.png" alt="short-turn-train-time" style="width: 30%; height: auto;">
-  <img src="./pic/short-turn-rollout-time.png" alt="short-turn-rollout-time" style="width: 30%; height: auto;">
+<div align="center">
+  <img src="./pic/short-turn-rollout.png" alt="short-turn-rollout" width="80%"  />
+</div>
+<div align="center">
+  <img src="./pic/short-turn-effective-tokens.png" alt="short-turn-effective-tokens" width="30%"  />
+  <img src="./pic/short-turn-train-time.png" alt="short-turn-train-time" width="30%"  />
+  <img src="./pic/short-turn-rollout-time.png" alt="short-turn-rollout-time" width="30%"  />
 </div>
 
 
@@ -110,14 +109,17 @@ async def generate(args, sample, sampling_params):
 
 为了进一步测试 VLM multi-turn training 的性能和稳定性，我们将 `--rollout-max-response-len`从[默认脚本](https://github.com/THUDM/slime/blob/main/examples/geo3k_vlm_multi_turn/run_geo3k_vlm_multi_turn.py)里的 4096 逐渐增加到 32000，并把 `max_turns` 从 3 调大为 20，得到以下的结果：
 
-<img src="./pic/long-turn-rollout.png" alt="long-turn-rollout" style="width: 100%; height: auto; margin: 20px 0;">
+
+<div align="center">
+  <img src="./pic/long-turn-rollout.png" alt="long-turn-rollout" width="80%"  />
+</div>
 
 可以看到，raw reward 仍然稳定上升并收敛。其他指标的变化趋势几乎与短上下文、小轮数时无异。
 
-<div style="display: flex; gap: 10px; width: 100%; margin: 20px 0;">
-  <img src="./pic/long-turn-effective-tokens.png" alt="long-turn-effective-tokens" style="width: 30%; height: auto;">
-  <img src="./pic/long-turn-train-time.png" alt="long-turn-train-time" style="width: 30%; height: auto;">
-  <img src="./pic/long-turn-rollout-time.png" alt="long-turn-rollout-time" style="width: 30%; height: auto;">
+<div align="center">
+  <img src="./pic/long-turn-effective-tokens.png" alt="long-turn-effective-tokens" width="30%"  />
+  <img src="./pic/long-turn-train-time.png" alt="long-turn-train-time" width="30%"  />
+  <img src="./pic/long-turn-rollout-time.png" alt="long-turn-rollout-time" width="30%"  />
 </div>
 
 

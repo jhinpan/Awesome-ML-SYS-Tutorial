@@ -7,11 +7,10 @@
 近期，SGLang RL 团队在强化学习的训练稳定性，训练效率与适用场景方面取得了重要进展，具体包括：
 
 
-- **INT4 QAT RL 全流程实践**：我们实现了从训练到推理的完整 QAT INT4 闭环的方案，并提供了详细的[技术方案](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/int4/readme.md)，显著提升了 Rollout 的效率与稳定性。
+- **INT4 QAT 全流程训练**：我们实现了从训练到推理的完整 QAT INT4 闭环的方案，并提供了详细的[技术方案](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/int4/readme.md)，显著提升了 Rollout 的效率与稳定性。
 - **Unified multi-turn VLM/LLM 多轮采样范式**：我们提供了 VLM 多轮采样范式的实现 [blog](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/rlhf/slime/vlm-multi-turn/readme.md)，开发者只需编写一套定制化的 `rollout` 函数，即可像训练 LLM 一样，轻松开启 VLM 的多轮强化学习。
-- **Multi-Agent Training**：得益于采样函数的优秀解耦设计，我们发布了多智能体强化学习（Multi-Agent RL）的方案 [MrlX](https://github.com/AQ-MedAI/MrlX)，为社区提供了协同训练的典型方案。
-- **稳定性提升**：我们实现了 **[Rollout Router Replay](https://github.com/THUDM/slime/blob/58525eb986c66a271aa31077e17b8afebe704b4f/tests/test_qwen3_30B_A3B_r3.py#L79)** 机制，显著提升了 MoE 模型在 RL 训练过程中的稳定性。
-- **低精度训练**：我们在 RL 场景中成功实现了 **[全流程 FP8 训练与采样](https://lmsys.org/blog/2025-11-25-fp8-rl/)**，进一步释放了硬件性能。
+- **Rollout Router Replay**：我们实现了 **[Rollout Router Replay](https://github.com/THUDM/slime/blob/58525eb986c66a271aa31077e17b8afebe704b4f/tests/test_qwen3_30B_A3B_r3.py#L79)** 机制，显著提升了 MoE 模型在 RL 训练过程中的稳定性。
+- **FP8 全流程训练**：我们在 RL 场景中成功实现了 **[全流程 FP8 训练与采样](https://lmsys.org/blog/2025-11-25-fp8-rl/)**，进一步释放了硬件性能。
 - **投机采样**：我们在 RL 场景中成功实践了 **[投机采样](https://thudm.github.io/slime/advanced/speculative-decoding.html)**，实现了大规模训练的无损加速。
 
 
