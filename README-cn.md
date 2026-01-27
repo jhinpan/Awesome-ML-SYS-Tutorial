@@ -34,6 +34,7 @@ $$
 
 ### slime 框架
 
+- [从第一性原理出发，统一 VLM 与 LLM 的 Multi-Turn Agentic RL](./rlhf/slime/vlm-multi-turn/readme.md)：介绍 slime 与 Miles 框架对 VLM 与 LLM 的 Multi-Turn Agentic RL 的实现，同样刊载[英文版本](./rlhf/slime/vlm-multi-turn/readme-en.md)和[Zhihu](https://zhuanlan.zhihu.com/p/1999486437280745217)。
 - [致敬 Kimi K2：基于 slime 的全流程 INT4 量化感知训练方案](./rlhf/slime/int4/readme.md)：介绍 slime 框架对 INT4 量化感知训练的实现，同样刊载[英文版本](./rlhf/slime/int4/readme-en.md)和[Zhihu](https://zhuanlan.zhihu.com/p/1999403679393014924)。
 - 【Not finished】[让速度与精度同在：全面解决 RL 中的训推不一致问题](./rlhf/slime/mismatch/blog-cn.md)：介绍 slime 框架对训推不一致问题提供的两种解决方案：通过 kernel 层面对齐实现完美的 True On-Policy 训练，以及基于 TIS/MIS 等算法来缓解训推不一致的影响。同样刊载[英文版本](./rlhf/slime/mismatch/blog-en.md)。
 - [Support FSDP2 as A Training Backend for slime](./rlhf/slime/fsdp/readme.md)：在 slime 中新增了 FSDP 作为训练后端，并与 Megatron 完成对齐。FSDP 能够更加灵活支持诸如 Qwen3-Next/gpt-oss 等架构创新的模型，并且有助于我们进一步支持 VLM RL。同样刊载[英文版本](./rlhf/slime/fsdp/readme_en.md)和[知乎](https://zhuanlan.zhihu.com/p/1979141713449742500)。
