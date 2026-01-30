@@ -2,6 +2,8 @@
 
 > TL;DR: We investigate the "Training-Inference Mismatch" in LLM-RL--a phenomenon where numerical inconsistencies between rollout and training engines threaten stability. We introduce two comprehensive solutions implemented in Miles: Truly On Policy training (backend alignment for bitwise precision) and Algorithmic Mitigation (correction via TIS/MIS). While Miles demonstrates impressive stability in practice, we provide these robust tools to ensure correctness and efficiency for the broader RL community.
 
+## Introduction
+
 The SGLang RL Team and the Miles community have recently conducted some interesting explorations around RL training stability and acceleration:
 
 - [Aligning the SGLang and FSDP backends for strictly zero KL divergence](https://github.com/radixark/miles/tree/main/examples/true_on_policy): achieving perfect train–inference consistency on dense models.
@@ -12,12 +14,11 @@ The SGLang RL Team and the Miles community have recently conducted some interest
 
 - [Support FSDP2 as A Flexible Training Backend for Miles](https://lmsys.org/blog/2025-12-03-miles-fsdp/): adding FSDP2 as a flexible training backend to support architecture-innovative models and align with Megatron.
 
-
 In this post, we further discuss the first work and share our understanding of the training-inference mismatch problem and our proposed solutions.
 
 "Training-Inference Mismatch" refers to the numerical inconsistencies that arise between the rollout (inference) engine and the training engine. Even when utilizing identical model weights, these engines often produce divergent log-probabilities for the same token sequence. In this post, we analyze the root causes of this divergence and present Miles' dual-approach solution.
 
-For those seeking absolute correctness, we offer a [Truly On Policy mode](https://github.com/radixark/Miles/blob/main/examples/true_on_policy/README.md) that achieves bitwise-exact alignment between SGLang and FSDP. For those prioritizing throughput, we provide Algorithmic Mitigation strategies, such as [Masked Importance Sampling (MIS)](https://richardli.xyz/rl-collapse-3) and [Truncated Importance Sampling (TIS)](https://fengyao.notion.site/off-policy-rl#279721e3f6c48092bbe2fcfe0e9c6b33). Our experiments demonstrate that MIS effectively suppresses mismatch growth during late-stage training while preserving high performance, making it a robust default for RL practitioners.
+For those seeking absolute correctness, we offer a [Truly On Policy mode](https://github.com/radixark/Miles/blob/main/examples/true_on_policy/README.md) that achieves bitwise-exact alignment between SGLang and FSDP/Megatron. For those prioritizing throughput, we provide Algorithmic Mitigation strategies, such as [Masked Importance Sampling (MIS)](https://richardli.xyz/rl-collapse-3) and [Truncated Importance Sampling (TIS)](https://fengyao.notion.site/off-policy-rl#279721e3f6c48092bbe2fcfe0e9c6b33). Our experiments demonstrate that MIS effectively suppresses mismatch growth during late-stage training while preserving high performance, making it a robust default for RL practitioners.
 
 ## What is Training Inference Mismatch?
 
@@ -27,13 +28,19 @@ For those seeking absolute correctness, we offer a [Truly On Policy mode](https:
 
 Training-Inference Mismatch refers to the numerical inconsistency between the rollout (inference) engine and the training engine. Even when both engines utilize identical model weights, they often produce slightly different log-probabilities for the same token sequence. This divergence stems from infrastructure-level variances, such as differing CUDA kernels, batch sizes, expert selection logic, and reduction orders (see Thinking Machine Lab [blog](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/)).
 
-> ⚠️ While it is widely claimed that training-inference mismatch can trigger RL collapse, we have not encountered this issue in practice, even during the post-training of frontier models like GLM 4.6.
-
 To quantify this discrepancy, we use the K3 KL divergence (see [Reference 8](http://joschu.net/blog/kl-approx.html) for details). In dense models, K3 KL typically ranges from $10^{-5}$ to $10^{-3}$, while in Mixture-of-Experts (MoE) models, it increases to between $10^{-3}$ and $10^{-1}$. Although this mismatch is often minor, it technically introduces an off-policy effect: the policy used for sampling is not strictly identical to the one used for loss computation. In complex scenarios, such as multi-turn agent tasks, existing literature suggests that these small discrepancies can accumulate over time, potentially destabilizing or collapsing the training process (e.g., [blog 1](https://richardli.xyz/rl-collapse) and [blog 2](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/)).
 
-Miles treats this mismatch as a non-negligible aspect of RL system design. Users can choose to eliminate it entirely for correctness or mitigate it for efficiency.
+While many practitioners anticipate immediate collapse when $K_3$ KL exceeds certain thresholds, Miles’ execution engine appears to provide a wider safety margin, allowing training to proceed where other setups might falter. Moreover, Miles treats this mismatch as a non-negligible aspect of RL system design. Users can choose to eliminate it entirely for correctness or mitigate it for efficiency.
 
-> ⚠️ Call for Collaboration: Miles has proven remarkably resilient to mismatch across various scales. We attempted to force a baseline collapse but were unsuccessful. If you are aware of open-source RL tasks that reproducibly collapse due to mismatch on a single node, please reach out to us.
+## Disclaimer: Miles’ Resilience in Practice
+
+While it is a widely held belief in the RL community—supported by documented cases in existing literature—that training-inference mismatch is a frequent "training killer," our experience with Miles presents a more nuanced picture. Over the past three months, we conducted more than 300 extensive runs across various settings, specifically targeting configurations that are traditionally notorious for instability. To our surprise, Miles demonstrated a significantly wider safety margin than what standard expectations might suggest. Even in these "high-risk" settings, we found that Miles' internal system architecture provides enough resilience that a task rarely exhibits the consistent collapse often associated with this phenomenon.
+
+Most notably, Miles has demonstrated extreme industrial-grade stability during the post-training of frontier models like GLM 4.5, 4.6, and 4.7. Throughout these large-scale deployments, we have never encountered a single collapse event. This suggests that for most standard use cases, Miles has effectively "internalized" many of the numerical risks that typically derail RL training.
+
+However, mismatch remains a silent, stochastic threat—a 'black swan' event within the Miles ecosystem, rather than the daily struggle seen in other setups. After hundreds of attempts, we finally isolated a rare, specific MoE trajectory that exhibited a clear collapse. This specific case served as our "laboratory" to test our advanced solutions. We confirmed that while a baseline implementation might struggle to recover from such a "poisoned" state, our Algorithmic Mitigation (MIS/TIS) successfully rescues the run.
+
+In this context, we provide these tools not because Miles is fragile, but to offer a surgical fail-safe for the extreme pressures of training the next generation of frontier models, ensuring that even a 1-in-300 edge case cannot derail your progress.
 
 ## Why Training and Inference Can Be Different
 
@@ -54,14 +61,37 @@ We provide these options to the community and try our best to make RL training m
 
 As we revealed, the key to fully eliminating the mismatch is to align all the operator backends between training and rollout—making every operation in training and inference bitwise-identical. To achieve this goal, we carefully selected the kernels we used for each model component.
 
-Specifically, we use batch-invariant kernels: This is a prerequisite for Truly On Policy, and we adopted the kernels from the Thinking Machines. This implementation provides the batch-invariant kernels for RMSNorm, Matmul, and other common operators, including log_softmax and mean. 
+Specifically, we use batch-invariant kernels: This is a prerequisite for Truly On Policy, and we adopted the kernels from the Thinking Machines. This implementation provides the batch-invariant kernels for RMSNorm, Matmul, and other common operators, including log_softmax and mean.
 
-Based on this implementation, we added the following implementations and optimizations:
+Based on this implementation, we added the following implementations and optimizations to FSDP:
 
 - FlashAttention-3: We use the Flash Attention 3 backend for both training and inference, since it achieves bitwise equality between prefill and decode operations while staying efficient compared to the Triton version. It also supports Radix Cache.
 - DeepGEMM: In our Truly On Policy implementation, we used DeepGEMM's fast matrix multiplication as a deterministic backend, which is more efficient. For different input sizes, DeepGEMM will use a fixed reduction order and tensor core instruction, which is independent of the shape changes.
-- Torch.compile(): To improve efficiency when enabling Truly On Policy, we use torch.compile to speed up by avoiding many tiny kernels. Some operations, for example, RoPE is also compiled to speed up.
+- Torch.compile: To improve efficiency when enabling Truly On Policy, we use torch.compile to speed up by avoiding many tiny kernels. Some operations, for example, RoPE is also compiled to speed up.
 - Numeric alignment: We also align numeric operation details between the two systems for simplicity, such as op dtype, detailed kernels, etc.
+
+To Megatron, the implementation is similar. At the final point, we get the log probs of SGLang and Megatron/FSDP into bitwise identical, leading to strict 0 training-inference KL divergence.
+
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/radixark/miles/refs/heads/main/examples/true_on_policy_vlm/diff.png" alt="Truly On Policy" width="50%">
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/radixark/miles/refs/heads/main/examples/true_on_policy/src/train_rollout_abs_diff.png" alt="Truly On Policy" width="50%">
+</div>
+
+<div align="center">
+  <img src="./pics/megatron-truly-on-policy.png" alt="Megatron Truly On Policy" width="50%">
+</div>
+
+<!-- 这三张图展示了我们在三种 setting 下（FSDP + VLM + Dense Model，FSDP + LLM + Dense Model，Megatron + LLM + Dense Model ）Truly On Policy 特性的效果。注意到，在开启 Truly On Policy 模式后，训练和推理的 log probs 的绝对差值都严格为 0，这证明了我们 Truly On Policy feature 的有效性。
+
+需要格外强调的是，即便我们已经付出了相当多的努力，Truly On Policy 仍旧处于初始阶段。对于不同的模型架构，各种并行策略，甚至是不同的硬件设备，每个变量都引入了指数级的复杂度。我们仍旧在不断探索和优化 Truly On Policy 的实现，并且如我们前文所述，目前的 Truly On Policy 模式只能对 Valina Dense LLM 模型有效。在 Dense 模型上，我们从未观察到 Miles 因为 training-inference mismatch 而 collapse。因此，即便开启了 Truly On Policy 模式，我们并没有见到 reward 等指标有更好的趋势。而且，Truly On Policy 模式由于会对 Megatron 和 FSDP 的实现进行许多侵入性修改，一方面导致复现困难，另一方面性能上也相比原生实现有一定损失。 -->
+
+These three figures demonstrate the effects of our Truly On Policy feature under three different settings (FSDP + VLM + Dense Model, FSDP + LLM + Dense Model, and Megatron + LLM + Dense Model). Notably, after enabling Truly On Policy mode, the absolute difference between training and inference log probs is strictly bit-wise identical, which proves the effectiveness of our Truly On Policy feature.
+
+⚠️ It is important to emphasize that despite our significant efforts, Truly On Policy is still in its early stages. Different model architectures, various parallelization strategies, and even different hardware devices each introduce exponential levels of complexity. We are continuing to explore and optimize the implementation of Truly On Policy. As mentioned earlier, the current Truly On Policy mode is only effective for vanilla dense LLM models. On dense models, we have never observed Miles collapsing due to training-inference mismatch. Therefore, even with Truly On Policy enabled, we haven't seen better trends in metrics like rewards. Furthermore, because Truly On Policy requires many invasive modifications to the implementations of Megatron and FSDP, it is difficult to reproduce and suffers from some performance loss compared to native implementations.
 
 ## Algorithmic Mitigation
 
@@ -69,7 +99,7 @@ Based on this implementation, we added the following implementations and optimiz
   <img src="pics/algorithmic-mitigation.png" alt="Algorithmic Mitigation" width="50%">
 </div>
 
-Let's first look at why this mismatch matters from an algorithmic perspective. The original PPO objective is shown below, where \(\pi_\theta\) denotes the current policy being optimized and used to compute the training loss, and \(\pi_{\text{old}}\) denotes the behavior policy that generated the rollout data (i.e., the action probabilities from the model before the current update step).
+Let's further look at why this mismatch matters from an algorithmic perspective. The original PPO objective is shown below, where $\pi_\theta$ denotes the current policy being optimized and used to compute the training loss, and $\pi_{\text{old}}$ denotes the behavior policy that generated the rollout data (i.e., the action probabilities from the model before the current update step).
 
 $$\mathcal{L}_{\text{PPO}}(\theta)
 = - \mathbb{E}_{x \sim \mathcal{D}} \mathbb{E}_{y \sim \pi_{\textcolor{red}{\text{old}}}} \left[
@@ -184,11 +214,9 @@ At the moment, we have not found a solid theoretical reason why these agent task
 
 ⚠️ Some researchers also suggest an alternative: if post-processing is unavoidable, you may re-run a forward pass on the rollout engine for the post-processed sequence to obtain the correct log probs. However, this cost is significant, and we believe that directly removing post-processing is often a practical choice for strong base models.
 
-Additionally, due to limited resource and time, we chose to use GRPO instead of PPO to demonstrate IS behavior.
-
 ### Existence of Mismatch
 
-We first confirm that as the training goes on, the K3 KL between Rollout Engine and Training Engine will increase. Our setting is:
+Due to limited resource and time, we chose to use GRPO instead of PPO to demonstrate IS behavior. We first confirm that on dense models, as the training goes on, even if training does not collapse, the K3 KL between Rollout Engine and Training Engine will increase. Our setting is:
 - Training dataset: [Link](https://huggingface.co/datasets/aaabiao/dapo_filter)
 - Eval dataset: aime 24 + aime 25
 - Base Model: Qwen3-4b-base ([Link](https://huggingface.co/Qwen/Qwen3-4B-Base))
@@ -205,11 +233,50 @@ We first confirm that as the training goes on, the K3 KL between Rollout Engine 
 
 You can see in the initial step of training, as the model learns and perplexity drops, K3 KL actually drops. But after 600 steps, although the train and eval reward remains stable, the K3 KL metrics start to increase dramatically, indicating the existence of training and rollout mismatch.
 
-### IS Won't Harm Performance
+On MoE models, the diff in logits causes the training and inference models to select different activated experts, leading to significantly larger train-inference mismatch in MoE models compared to dense models (although on Qwen30B-A3B, when not collapsed, the magnitude of K3 KL is similar to Qwen3-4B, possibly). We successfully found cases where models collapse due to train-inference mismatch (experimental settings are the same as dense models except for the base model). Below are some specific experimental results.
 
-> See our full weight&bias log [here](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b).
+<div align="center">
+  <img src="pics/moe-origin-reward.png" alt="moe origin reward" width="50%">
+</div>
 
-In our experiments, we also verified that enabling distribution correction—including several commonly used configurations—does not degrade performance or destabilize training. To demonstrate this, we enabled different IS-related options at the beginning of training and compared them against a baseline with no IS correction.
+<div align="center">
+  <img src="pics/moe-origin-mis-k3.png" alt="moe mis k3" width="45%" />
+  <img src="pics/moe-origin-resp.png" alt="moe resp_len" width="42%" />
+</div>
+
+Around step 320, we first observed a drop in grad norm (~0.07 -> ~0.02), which is usually a precursor to collapse. Then reward dropped sharply, and K3 KL rose dramatically. Although reward later recovered to normal levels, the grad norm was already abnormal at this point, so we can consider the training to have collapsed.
+
+We further ensure the situation by continuing the training based on the last checkpoint before collapase. We observe the same situation in this settings. This stable collape ensures the existence of training/inference mismatch.
+
+<div align="center">
+  <img src="pics/moe-continue-reward.png" alt="moe continue reward" width="50%">
+</div>
+
+<details>
+<summary>More metrics on MoE experiments</summary>
+
+<div align="center">
+  <img src="pics/moe-origin-ratio1.png" alt="moe ratio 1" width="100%">
+</div>
+
+<div align="center">
+  <img src="pics/moe-origin-ratio2.png" alt="moe ratio 2" width="100%">
+</div>
+
+<div align="center">
+  <img src="pics/moe-origin-diff.png" alt="moe diff train/inference" width="50%">
+</div>
+
+</details>
+
+
+<!-- [TODO: Perhaps show more specific metrics such as ratio max/min?] -->
+
+### When Mismatch is Small, IS Won't Harm Performance
+
+> Full wandb log for Qwen3-4B-Base can be found [here](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ).
+
+In our Qwen3-4B-Base experiments, we verified that enabling TIS/MIS (including several commonly used configurations) does not degrade performance or destabilize training. To demonstrate this, we enabled different IS-related options at the beginning of training and compared them against a baseline with no IS correction.
 Below are the four configurations we evaluated:
 
 1. Baseline
@@ -238,15 +305,33 @@ We also examined the K3 KL divergence for these runs. We observed that across al
 </p>
 
 
-### IS Can Suppress KL Increase
+### When Mismatch is Large, TIS/MIS Can Solve Collapse
 
-To test whether MIS (IS + RS + BN) works, we continue training on step 650, and the result is below. You can see that for the base run, kl continues to increase, but with MIS, the increasing trend is successfully depressed and starts to decrease.
+> Full wandb log for Qwen30B-A3B can be found [here](https://wandb.ai/miles-public/slime-dapo/reports/Training-inference-Mismatch-MoE-Experiement--VmlldzoxNTYzMTYxOQ) 
+>
+> ckpt address can be found here [here](https://huggingface.co/collections/zhuohaoli/qwen3-30b-a3b-base-mismatch)
+
+<!-- the link should be revised later -->
+
+In Qwen30B-A3B, we took a checkpoint from 300 steps and continued training with different TIS/MIS settings. We found that properly configured TIS + MIS can effectively suppress collapse caused by train-inference mismatch. We conducted experiments with 4 different settings:
+
+* config 1: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> still collapsed
+* config 2: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] + batch norm --> did not collapse
+* config 3: token TIS [0.5, 1.5] + geometric MIS [0.99, 1.001] --> did not collapse
+* config 4: token TIS [0.5, 1.5] --> collapsed
+
+<!-- [TODO: add some pics] -->
 
 <div align="center">
-  <img src="pics/is-kl-suppression.png" alt="IS Can Suppress KL Increase" width="50%">
+  <img src="pics/moe-config1-reward.png" alt="config1" width="45%">
+  <img src="pics/moe-config2-reward.png" alt="config2" width="45%">
 </div>
 
-⚠️: Due to limited resources and time in academia, our experiments are primarily conducted on small-scale dense models, and the conclusions may differ from those of large-scale MOE training. Please look forward to our future blogs with collaboration across more industrial partners.
+<div align="center">
+  <img src="pics/moe-config3-reward.png" alt="config3" width="45%">
+  <img src="pics/moe-config4-reward.png" alt="config4" width="45%">
+</div>
+
 
 ## Usage
 
@@ -344,11 +429,11 @@ Any mismatch solving tool can be found in Miles (or its upstream Miles)!
 
 Bytedance Inc: Yingru Li, Jiacai Liu, Yuxuan Tong, Qian Liu, Hongyu Lu, Ziheng Jiang
 
-SGLang RL Team: Changyi Yang, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
+SGLang RL Team: Changyi Yang, Zhuohao Li, Nan Jiang, Chenxing Xie, Zilin Zhu, Ji Li, Yuzhen Zhou
 
-RadixArk Miles Team: Chenyang Zhao, Yueming Yuan, Jiajun Li, Banghua Zhu, Tom, Yusheng Su
+RadixArk Miles Team: Chenyang Zhao, Mao Cheng, Yueming Yuan, Jiajun Li, Banghua Zhu, Tom, Yusheng Su
 
-We sincerely thanks Qiwei Di, Xuheng Li, Heyang Zhao and Prof. Quanquan Gu from UCLA, as well as Liyuan Liu and Feng Yao from Thinking Machines Lab for their valuable suggestions and discussions.
+We sincerely thanks Qiwei Di, Xuheng Li, Heyang Zhao and Prof. Quanquan Gu from UCLA, as well as Liyuan Liu and Feng Yao from Thinking Machines Lab for their valuable suggestions and discussions. This idea of this work originated at the final weeks when Chenyang was a PhD student at UCLA and a student researcher at ByteDance Seed. Thanks to all the support along the way and Prof. Quanquan Gu for his guidance.
 
 ## Reference
 

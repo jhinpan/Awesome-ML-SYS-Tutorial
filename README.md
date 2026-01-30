@@ -22,7 +22,9 @@ Coming back to the topic, this series of podcasts started in August 2024, when I
 
 ### slime Framework
 
-- [Achieving Speed and Accuracy: A Comprehensive Solution to Train-Inference Mismatch in RL](./rlhf/slime/mismatch/blog-en.md): Introduces two solutions provided by the slime framework for the train-inference mismatch problem: achieving perfect True On-Policy training through kernel-level alignment, and mitigating the mismatch using algorithms like TIS/MIS. Also available in [Chinese version](./rlhf/slime/mismatch/blog-cn.md).
+- [One Rollout to Rule Them All: Seamless Multi-Turn RL for LLM and VLM](./rlhf/slime/vlm-multi-turn/readme-en.md): Introduces the seamless multi-turn RL for LLM and VLM, including the technical details and the implementation of the seamless multi-turn RL for LLM and VLM. Also available in [Chinese version](./rlhf/slime/vlm-multi-turn/readme.md) and [Zhihu](https://zhuanlan.zhihu.com/p/1999486437280745217).
+- [Squeezing 1TB Model Rollout into a Single H200: INT4 QAT RL End-to-End Practice](./rlhf/slime/int4/readme-en.md): Introduces the INT4 QAT RL end-to-end practice, including the technical details and the implementation of the INT4 QAT RL end-to-end practice. Also available in [Chinese version](./rlhf/slime/int4/readme.md) and [Zhihu](https://zhuanlan.zhihu.com/p/1999403679393014924).
+- 【Not finished】[Let Speed Be With Stability: All-In-One Solution to Training-Inference Mismatch with Miles](./rlhf/slime/mismatch/blog-en.md): Introduces two solutions provided by the Miles framework for the train-inference mismatch problem: achieving perfect True On-Policy training through kernel-level alignment, and mitigating the mismatch using algorithms like TIS/MIS. Also available in [Chinese version](./rlhf/slime/mismatch/blog-cn.md).
 - [Support FSDP2 as A Training Backend for slime](./rlhf/slime/fsdp/readme_en.md): Added FSDP as a training backend to slime, and aligned it with Megatron. FSDP is more flexible in supporting models with architectural innovations like Qwen3-Next/gpt-oss and helps us further support VLM RL. Also available in [Chinese version](./rlhf/slime/fsdp/readme.md) and on [Zhihu](https://zhuanlan.zhihu.com/p/1979141713449742500).
 - [Unified FP8: Moving Beyond Mixed Precision for Stable and Accelerated MoE RL](./rlhf/slime/fp8/readme_en.md): Fully utilizing FP8 for both sampling (Rollout) and training (Training) in RL. Also available in [Chinese version](./rlhf/slime/fp8/readme.md) and on [Zhihu](https://zhuanlan.zhihu.com/p/1974681194017865986).
 - [Power Up Speculative Decoding In Reinforcement Learning](./rlhf/slime/spec/readme-en.md): Introduces speculative decoding into the RL sampling process, significantly boosting sampling speed when the batch size is appropriate; moreover, the draft model is updated during training. Compared to freezing the draft model, the accepted length remains consistently high, yielding long-term stable positive returns. Also available in [Chinese version](./rlhf/slime/spec/readme.md).
@@ -34,6 +36,16 @@ Coming back to the topic, this series of podcasts started in August 2024, when I
 
 - [AReal Code Walk Through](./rlhf/areal/code-walk-through_EN.md) AReal source code appreciation. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1983417813080236770) and in [Chinese version](./rlhf/areal/code-walk-through_CN.md).
 
+
+### System Design and Optimization
+
+- [Deep Dive into DeepSeek MoE with Classic Secondary Development of EP on FSDP](./rlhf/sys-design/readme-4-en.md): Deep dive into DeepSeek MoE with classic secondary development of EP on FSDP. Also available in [Chinese version](./rlhf/sys-design/readme-4.md) and [zhihu](https://zhuanlan.zhihu.com/p/1990790333823481023).
+- [Deep Thoughts on RL Systems: In-Depth Understanding of Weight Update Mechanism](./rlhf/sys-design/readme-1-EN.md): Summary of half a year's work, in-depth understanding of the weight update mechanism. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1925210722704531547) and in [Chinese version](./rlhf/sys-design/readme-1.md).
+- [Deep Thoughts on RL Systems: FSDP Training Backend](./rlhf/sys-design/readme-2-en.md): Discusses the principles and implementation of FSDP, and analyzes verl's use of FSDP. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1929115059113693341) and in [Chinese version](./rlhf/sys-design/readme-2.md).
+- [Pending Review] [Deep Thoughts on RL Systems: Megatron](./rlhf/sys-design/readme-3.md): Brief analysis of Megatron's basic features, focusing on its use in the RL framework.
+- [Extending the OpenRLHF Inference Engine](./rlhf/OpenRLHF/develop-log.md): Development notes on integrating SGLang into OpenRLHF. The entire process was very painful, and there's still an nccl hang error that a DeepSpeed core contributor is currently fixing.
+- [Pending Review] [SGLang as rollout engine of GRPO trainer](./rlhf/GRPO/SGLang_GRPO.md): Introduction on how to use SGLang as the inference backend for the GRPO Trainer in TRL. GRPO is a PPO variant that optimizes PPO's memory usage while improving mathematical reasoning capabilities.
+- [Pending Review] [Light-DuoAttention: Achieves efficient Long-Context Inference using CuTeDSL and runs within SGLang](sglang/light-duoattention/light-duoattention.md): Introduction DuoAttention, a solution designed for Long-Context Inference, implemented with CuteDSL and supported in SGLang. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1984978732436431358).
 
 ### verl Framework
 
@@ -57,17 +69,9 @@ Coming back to the topic, this series of podcasts started in August 2024, when I
 - [Illustrated Series on LLM RLHF: PPO Principles and Source Code Interpretation for Everyone](https://zhuanlan.zhihu.com/p/677607581) and [Illustrated Distributed Training Process based on Ray in OpenRLHF](https://zhuanlan.zhihu.com/p/12871616401): Excellent RLHF introductory resources by Ms. Mengyuan. After reading, you will have a good understanding of RLHF's computational flow and the OpenRLHF PPO framework. I have also added my own understanding in [RLHF Computational Flow](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/tree/main/rlhf/OpenRLHF#rlhf-%E7%9A%84%E8%AE%A1%E7%AE%97%E6%B5%81).
 - [Brief Analysis of the Computational Flow of Post-Training Systems Represented by OpenRLHF](./rlhf/OpenRLHF/readme.md): Further complement to Ms. Mengyuan's article. The Github native rendering is terrible; you might as well look at [Zhihu](https://zhuanlan.zhihu.com/p/16370000391).
 
-### System Design and Optimization
-
-- [Deep Thoughts on RL Systems: In-Depth Understanding of Weight Update Mechanism](./rlhf/sys-design/readme-1-EN.md): Summary of half a year's work, in-depth understanding of the weight update mechanism. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1925210722704531547) and in [Chinese version](./rlhf/sys-design/readme-1.md).
-- [Deep Thoughts on RL Systems: FSDP Training Backend](./rlhf/sys-design/readme-2-en.md): Discusses the principles and implementation of FSDP, and analyzes verl's use of FSDP. Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1929115059113693341) and in [Chinese version](./rlhf/sys-design/readme-2.md).
-- [Pending Review] [Deep Thoughts on RL Systems: Megatron](./rlhf/sys-design/readme-3.md): Brief analysis of Megatron's basic features, focusing on its use in the RL framework.
-- [Extending the OpenRLHF Inference Engine](./rlhf/OpenRLHF/develop-log.md): Development notes on integrating SGLang into OpenRLHF. The entire process was very painful, and there's still an nccl hang error that a DeepSpeed core contributor is currently fixing.
-- [Pending Review] [SGLang as rollout engine of GRPO trainer](./rlhf/GRPO/SGLang_GRPO.md): Introduction on how to use SGLang as the inference backend for the GRPO Trainer in TRL. GRPO is a PPO variant that optimizes PPO's memory usage while improving mathematical reasoning capabilities.
 
 ### Algorithms and Theory
 
-- [Pending Review] [Learning to Reason under Off-Policy Guidance](./rlhf/partial-rollout/Learning_to_Reason_under_Off-Policy_Guidance.md): The LUFFY framework uses off-policy assistance for on-policy learning, dynamically balancing imitation and exploration by combining off-policy inference trajectories with on-policy rollouts.
 - [Kimi K1.5: Successful Practice of Long Context RL](./rlhf/partial-rollout/readme.md): Industrial implementation of Long Context RLHF. I have always liked the technical reports from the Kimi team. Also available on [Zhihu: Kimi K1.5: Successful Practice of Long Context RL](https://zhuanlan.zhihu.com/p/1894282607325344277).
 - [Rule-based Reward](https://zhuanlan.zhihu.com/p/13211508979): Only on Zhihu, a brief write-up. Honestly, I didn't particularly like the original paper, but determined reward is indeed charming.
 - [SWE-Bench: How to Construct an Excellent Benchmark in the LLM Era](https://zhuanlan.zhihu.com/p/16292266518): Reading notes on the SWE-Bench paper. How to construct a good benchmark to provide fine-grained reward for post-training is an eternal and beautiful topic.
@@ -83,10 +87,10 @@ Coming back to the topic, this series of podcasts started in August 2024, when I
 
 ### Core Architecture and Optimization
 
+- [From KV Cache to Zero Overhead Scheduling, Understanding SGLang's Scheduling Ingenuity](./sglang/scheduler/readme-en.md): Also available on [Zhihu](https://zhuanlan.zhihu.com/p/1992587332189197731) and in [Chinese version](./sglang/scheduler/readme.md).
 - [SGLang Code Walk Through](./sglang/code-walk-through/readme.md): The entire process of a request being handled by the SGLang Engine. Some parts are unfinished, but most are okay and have served as a starting point for many SGLang beginners. [Chinese version is here](./sglang/code-walk-through/readme-CN.md).
-- [Walk Through SGLang / VLLM Worker](./sglang/sglang-worker/readme.md): Incomplete analysis of SGLang code. Also available on [Walk Through SGLang / VLLM Worker](https://zhuanlan.zhihu.com/p/6363614076). We also thoughtfully provide an [English version](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/sglang/sglang-worker/readme.md). For a more detailed analysis, refer to [SGLang Code Walk Through](./sglang/code-walk-through/readme.md); this one is just supplementary.
+<!-- - [Walk Through SGLang / VLLM Worker](./sglang/sglang-worker/readme.md): Incomplete analysis of SGLang code. Also available on [Walk Through SGLang / VLLM Worker](https://zhuanlan.zhihu.com/p/6363614076). We also thoughtfully provide an [English version](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/sglang/sglang-worker/readme.md). For a more detailed analysis, refer to [SGLang Code Walk Through](./sglang/code-walk-through/readme.md); this one is just supplementary. -->
 - [Walk Through SGLang Scheduler](./sglang/sglang-scheduler/readme-CN.md)
-- [Pending Review] [SGLang Scheduler Evolution](./sglang/scheduler-evolution/SGLang%20Scheduler%20技术变迁.md): Detailed introduction to the technical evolution of the SGLang Scheduler from serial to CPU/GPU overlap, and related components, comparing the previous overlap Scheduler with the current one introducing multiple CUDA streams and FutureMap. Can be viewed on [Zhihu article](https://zhuanlan.zhihu.com/p/1969077475129688722).
 - [Pending Review] [KV Cache Code Walkthrough](./sglang/kvcache-code-walk-through/readme.md): Overview of KV cache management implementation, starting from the Scheduler component, detailing the update process of KV cache and memory pool during prefill and decode stages.
 - [Pending Review] [SGLang Multimodal Request Lifecycle: A Deep Architectural Analysis with Qwen2.5-VL as an Example](./sglang/code-walk-through/multimodal_request_lifecycle.md): Provides a detailed analysis of the multimodal request processing flow within the SGLang framework, using Qwen2.5-VL as a reference model.
 - [Pending Review] [How A Model is Loaded in Hugging Face and SGLang](./sglang/how-model-is-loaded/readme.md): Documents the process of loading models in Hugging Face and SGLang to help understand the weight loading mechanism.
@@ -132,6 +136,7 @@ Coming back to the topic, this series of podcasts started in August 2024, when I
 ### Distributed Training & Communication
 
 - [Pending Review] [Implementing Tensor Parallelism From Scratch](./torch/tensor-parallelism/readme.md): Implementation and practice of Tensor Parallelism.
+- [Pending Review] [Expert Parallelism](./rlhf/sys-design/readme-4.md)
 - [NCCL and NVIDIA TOPO](./torch/nccl/readme.md): Introduction to NCCL and NVIDIA GPU detection. Also available on [NCCL and NVIDIA TOPO](https://zhuanlan.zhihu.com/p/6160835906).
 - [NCCL and SGLang](./torch/nccl/readme_en.md): Application of NCCL in SGLang. This is very similar to the Chinese content but includes some additional notes on parallel strategies. I probably won't complete this note and will write a separate one to record parallel strategies.
 - [PyTorch Distributed](./torch/torch-distributed/readme.md): Communication practice with `torch.distributed`, details on GIL and `all_reduce`. This part is also available on [Zhihu: PyTorch Communication Practice](https://zhuanlan.zhihu.com/p/5853094319).

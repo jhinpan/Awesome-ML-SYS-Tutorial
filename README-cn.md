@@ -34,7 +34,9 @@ $$
 
 ### slime 框架
 
-- [让速度与精度同在：全面解决 RL 中的训推不一致问题](./rlhf/slime/mismatch/blog-cn.md)：介绍 slime 框架对训推不一致问题提供的两种解决方案：通过 kernel 层面对齐实现完美的 True On-Policy 训练，以及基于 TIS/MIS 等算法来缓解训推不一致的影响。同样刊载[英文版本](./rlhf/slime/mismatch/blog-en.md)。
+- [从第一性原理出发，统一 VLM 与 LLM 的 Multi-Turn Agentic RL](./rlhf/slime/vlm-multi-turn/readme.md)：介绍 slime 与 Miles 框架对 VLM 与 LLM 的 Multi-Turn Agentic RL 的实现，同样刊载[英文版本](./rlhf/slime/vlm-multi-turn/readme-en.md)和[Zhihu](https://zhuanlan.zhihu.com/p/1999486437280745217)。
+- [致敬 Kimi K2：基于 slime 的全流程 INT4 量化感知训练方案](./rlhf/slime/int4/readme.md)：介绍 slime 框架对 INT4 量化感知训练的实现，同样刊载[英文版本](./rlhf/slime/int4/readme-en.md)和[Zhihu](https://zhuanlan.zhihu.com/p/1999403679393014924)。
+- 【Not finished】[让速度与精度同在：全面解决 RL 中的训推不一致问题](./rlhf/slime/mismatch/blog-cn.md)：介绍 slime 框架对训推不一致问题提供的两种解决方案：通过 kernel 层面对齐实现完美的 True On-Policy 训练，以及基于 TIS/MIS 等算法来缓解训推不一致的影响。同样刊载[英文版本](./rlhf/slime/mismatch/blog-en.md)。
 - [Support FSDP2 as A Training Backend for slime](./rlhf/slime/fsdp/readme.md)：在 slime 中新增了 FSDP 作为训练后端，并与 Megatron 完成对齐。FSDP 能够更加灵活支持诸如 Qwen3-Next/gpt-oss 等架构创新的模型，并且有助于我们进一步支持 VLM RL。同样刊载[英文版本](./rlhf/slime/fsdp/readme_en.md)和[知乎](https://zhuanlan.zhihu.com/p/1979141713449742500)。
 - [Unified FP8: Moving Beyond Mixed Precision for Stable and Accelerated MoE RL](./rlhf/slime/fp8/readme.md)：在 RL 中完全使用 FP8 进行采样（Rollout）和训练（Training），同样刊载[英文版本](./rlhf/slime/fp8/readme_en.md)和[知乎](https://zhuanlan.zhihu.com/p/1974681194017865986)。
 - [Power Up Speculative Decoding In Reinforcement Learning](./rlhf/slime/spec/readme.md)：将 speculative decoding 引入到了 RL 的采样流程中，在 batch size 合适的情况下，采样速度得到了显著提升；并且，draft model 也会在训练过程中更新。相较于冻结 draft model 的做法，accepted length 持续维持在较高水平，产生长期稳定的正收益。同样刊载[英文版本](./rlhf/slime/spec/readme-en.md)。
@@ -46,6 +48,17 @@ $$
 
 - [AReal Code Walk Through](./rlhf/areal/code-walk-through_CN.md) AReal 源码赏析，同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1983417813080236770)和[英文版本](./rlhf/areal/code-walk-through_EN.md)。
 
+
+
+### 系统设计与优化
+
+- [深入浅出 DeepSeek MoE，EP 与 FSDP 经典二次开发](./rlhf/sys-design/readme-4.md)：深入浅出 DeepSeek MoE，EP 与 FSDP 经典二次开发，同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1990790333823481023)和[英文版本](./rlhf/sys-design/readme-4-en.md)。考虑到知乎的公式渲染更好，欢迎大家优先阅读知乎版本。
+- [RL 系统深思：深入理解权重更新机制](./rlhf/sys-design/readme-1.md)：半年工作的总结，深入理解权重更新机制，同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1925210722704531547)和[英文版本](./rlhf/sys-design/readme-1-EN.md)。
+- [RL 系统深思：FSDP 训练后端](./rlhf/sys-design/readme-2.md)：讨论 FSDP 的原理和实现，以及分析 verl 的 FSDP 使用。同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1929115059113693341)和[英文版本](./rlhf/sys-design/readme-2-en.md)。
+- [Pending Review] [RL 系统深思：Megatron](./rlhf/sys-design/readme-3.md)：Megatron 的基本特性浅析，重点分析 Megatron 在 RL 框架中的使用。
+- [扩展 OpenRLHF 的推理引擎](./rlhf/OpenRLHF/develop-log.md)：将 SGLang 接入到 OpenRLHF 的开发笔记，整个过程非常痛苦，而且目前还有 nccl hang error，已经直接联系了 deepspeed core contributor 在修复了。
+- [Pending Review] [SGLang as rollout engine of GRPO trainer](./rlhf/GRPO/SGLang_GRPO.md)：介绍如何将 SGLang 作为 TRL 中 GRPO Trainer 的推理后端，GRPO 是 PPO 的变体，在优化数学推理能力的同时优化 PPO 的内存使用。
+- [Pending Review] [Light-DuoAttention：用 CuTeDSL 实现高效长上下文推理](./sglang/light-duoattention/light-duoattention.md)：介绍 DuoAttention，一种为了长上下文推理设计的解决方案，并使用 CuteDSL 实现 DuoAttention 并且在 SGLang 上支持并验证，同样刊载于 [知乎](https://zhuanlan.zhihu.com/p/1984978732436431358)。
 
 ### verl 框架
 
@@ -70,17 +83,8 @@ $$
 - [浅析以 OpenRLHF 为代表的 post-training 系统的计算流程](./rlhf/OpenRLHF/readme.md)：基于猛猿小姐姐的文章再做补充，Github native 渲染的巨烂，甚至看[知乎](https://zhuanlan.zhihu.com/p/16370000391)好了。
 
 
-### 系统设计与优化
-
-- [RL 系统深思：深入理解权重更新机制](./rlhf/sys-design/readme-1.md)：半年工作的总结，深入理解权重更新机制，同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1925210722704531547)和[英文版本](./rlhf/sys-design/readme-1-EN.md)。
-- [RL 系统深思：FSDP 训练后端](./rlhf/sys-design/readme-2.md)：讨论 FSDP 的原理和实现，以及分析 verl 的 FSDP 使用。同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1929115059113693341)和[英文版本](./rlhf/sys-design/readme-2-en.md)。
-- [Pending Review] [RL 系统深思：Megatron](./rlhf/sys-design/readme-3.md)：Megatron 的基本特性浅析，重点分析 Megatron 在 RL 框架中的使用。
-- [扩展 OpenRLHF 的推理引擎](./rlhf/OpenRLHF/develop-log.md)：将 SGLang 接入到 OpenRLHF 的开发笔记，整个过程非常痛苦，而且目前还有 nccl hang error，已经直接联系了 deepspeed core contributor 在修复了。
-- [Pending Review] [SGLang as rollout engine of GRPO trainer](./rlhf/GRPO/SGLang_GRPO.md)：介绍如何将 SGLang 作为 TRL 中 GRPO Trainer 的推理后端，GRPO 是 PPO 的变体，在优化数学推理能力的同时优化 PPO 的内存使用。
-
 ### 算法与理论
 
-- [Pending Review] [Learning to Reason under Off-Policy Guidance](./rlhf/partial-rollout/Learning_to_Reason_under_Off-Policy_Guidance.md)：使用离线策略辅助在线学习的 LUFFY 框架，通过将 off-policy 推理轨迹与 on-policy rollout 结合，动态平衡模仿与探索。
 - [Kimi K1.5: Long Context RL 的成功实践](./rlhf/partial-rollout/readme.md)：Long Context RLHF 的工业级实现，一直很喜欢 kimi 团队的技术报告，同样刊载于 [Kimi K1.5: Long Context RL 的成功实践](https://zhuanlan.zhihu.com/p/1894282607325344277)。
 - [Rule-based Reward](https://zhuanlan.zhihu.com/p/13211508979)：这篇只有知乎，浅浅写了写，老实说原文写的我并不太喜欢，但是 determined reward 确实 charming。
 - [SWE-Bench：如何构造 LLM 时代的优秀 Benchmark](https://zhuanlan.zhihu.com/p/16292266518)，基于 SWE-Bench 的论文阅读笔记，如何构造好的 benchmark 以为 post-training 提供细粒度 reward，是永恒且美妙的话题。
@@ -96,10 +100,10 @@ $$
 
 ### 核心架构与优化
 
+- [从 KV Cache 到 Zero Overhead Scheduling，一文读懂 SGLang 的调度巧思](./sglang/scheduler/readme.md)：同样刊载于[知乎](https://zhuanlan.zhihu.com/p/1992587332189197731)和[英文版本](./sglang/scheduler/readme-en.md)。
 - [SGLang Code Walk Through](./sglang/code-walk-through/readme.md)：一个请求被 SGLang Engine 处理的全过程，还有一些 part 没有完成，但是大多地方已经 okay，也让很多 SGLang begginer 就此开始。这里还有[中文版本](./sglang/code-walk-through/readme-CN.md)。
-- [Walk Through SGLang / VLLM Worker](./sglang/sglang-worker/readme.md)：SGLang 的代码不完全解析，同样刊载于 [Walk Through SGLang / VLLM Worker](https://zhuanlan.zhihu.com/p/6363614076)，这次我们还贴心提供了[英文版本](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/sglang/sglang-worker/readme.md)。更详细的解析应该参考 [SGLang Code Walk Through](./sglang/code-walk-through/readme.md)，这个只是辅助看看。
-- [Walk Through SGLang Scheduler](./sglang/sglang-scheduler/readme-CN.md)
-- [Pending Review] [SGLang Scheduler Evolution](./sglang/scheduler-evolution/SGLang%20Scheduler%20技术变迁.md)：详细介绍了 SGLang Scheduler 从串行到 CPU / GPU overlap 的技术演进及相关组件，对比前代 overlap Scheduler 和当前引入多 CUDA stream 与 FutureMap 的 overlap Scheduler。可到知乎查看[文章](https://zhuanlan.zhihu.com/p/1969077475129688722)
+<!-- - [Walk Through SGLang / VLLM Worker](./sglang/sglang-worker/readme.md)：SGLang 的代码不完全解析，同样刊载于 [Walk Through SGLang / VLLM Worker](https://zhuanlan.zhihu.com/p/6363614076)，这次我们还贴心提供了[英文版本](https://github.com/zhaochenyang20/Awesome-ML-SYS-Tutorial/blob/main/sglang/sglang-worker/readme.md)。更详细的解析应该参考 [SGLang Code Walk Through](./sglang/code-walk-through/readme.md)，这个只是辅助看看。 -->
+- [Pending Review] [Walk Through SGLang Scheduler](./sglang/sglang-scheduler/readme-CN.md)：SGLang Scheduler 的代码不完全解析。
 - [Pending Review] [KV Cache Code Walkthrough](./sglang/kvcache-code-walk-through/readme.md)：KV cache 管理实现的概览，从 Scheduler 组件开始，详细说明 prefill 和 decode 阶段中 KV cache 和内存池的更新过程。
 - [Pending Review] [SGLang 多模态请求生命周期：以 Qwen2.5-VL 为例的架构级深度解析](./sglang/code-walk-through/multimodal_request_lifecycle.md)：以 Qwen2.5-VL 为参考模型，提供对 SGLang 框架内多模态请求处理流程的详细剖析。
 - [Pending Review] [How A Model is Loaded in Hugging Face and SGLang](./sglang/how-model-is-loaded/readme.md)：记录模型在 Hugging Face 和 SGLang 中的加载过程，帮助理解权重加载机制。

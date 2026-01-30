@@ -32,8 +32,6 @@
 
 slime 将这种不匹配视为 RL 系统设计中不可忽视的一个方面。用户可以选择彻底消除它以确保正确性，或者采取缓解措施以兼顾效率。
 
-⚠️ 注：slime 在各种规模的任务中，即便存在训推不一致，其稳定性都相当出色。我们花费了大量时间和算力来寻找能够让 slime 因为训推不一致而崩溃的任务，但未能成功。如果您知道任何开源 RL 任务因不匹配而在单节点上可复现地崩溃，请随时联系我们。
-
 ## 为什么训练和推理结果会不同？
 
 原因多种多样，我们倾向于认为根本原因是浮点加法不满足结合律。例如，当批次较小时，算子可能会使用分割归约（Split-reduction）优化，这种优化会根据输入大小改变归约顺序。由于浮点运算不满足结合律，不同的累加顺序会引入数值差异。每个 Tensor Core 指令在内部执行归约时，顺序也可能不同（参考：Thinking Machine Lab 的[博客](https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/)）。
@@ -184,7 +182,7 @@ $$\mathcal{L}_{\text{PPO-decoupled}}(\theta)
 
 ### 不匹配现象的存在
 
-由于有限的时间和资源，我们选择使用 GRPO 而非 PPO 来演示 IS 的行为。我们首先确认，随着训练的进行，即便训练不崩溃，Rollout Engine 和 Training Engine 的 log probs 间的 K3 KL 也可能会增加。我们的实验设置如下：
+由于有限的时间和资源，我们选择使用 GRPO 而非 PPO 来演示 IS 的行为。我们首先确认，在dense 模型上，随着训练的进行，即便训练不崩溃，Rollout Engine 和 Training Engine 的 log probs 间的 K3 KL 也可能会增加。我们的实验设置如下：
 
 - 训练数据集：[Dapo](https://huggingface.co/datasets/aaabiao/dapo_filter)
 - 评估数据集：aime 24 + aime 25
@@ -199,14 +197,21 @@ $$\mathcal{L}_{\text{PPO-decoupled}}(\theta)
   <img src="pics/base-eval.png" width="45%" />
   <img src="pics/base-reward.png" width="45%" />
 </p>
-
 可以看到，在训练初期，随着模型学习且 Perplexity 下降，K3 KL 实际上下降了。但在 600 步之后，尽管训练和评估奖励保持稳定并未下降，K3 KL 指标却开始急剧上升，表明训练和 Rollout 之间的不匹配确实存在并且在训练后期会加大。
 
-### IS 不会损害 Performance
+在 MoE 模型上，logits 的 diff 会导致训练和推理模型选择不同的激活 expert，会导致 MoE 的 train-inference mismatch 显著大于 Dense 模型（虽然在 Qwen30B-A3B 上未崩溃情况下 K3 KL 的量级和 Qwen3-4B 类似，可能），我们成功找到了模型因为 train-inference 崩溃的现象（实验设置除基座模型之外与 Dense 相同）。以下是一些具体的实验结果 [TODO add some pic]
 
->  完整的 wandb log 参考[此处](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b)。
+在 320 步附近，首先出现了 grad norm 下降（~0.07 -> ~0.02），这通常是崩溃的前兆。然后 reward 骤降，K3 KL 陡然上升。尽管后面 reward 重新恢复到正常水平，但是此时的 grad norm 已然异常，所以我们可以认为此时训练已经崩溃。
 
-我们在实验中，验证了启用 TIS/MIS（包括几种常用配置）并不会降低性能或破坏训练稳定性。为了证明这一点，我们在训练开始时启用了不同的 IS 相关选项，并将其与未进行 IS 修正的基线进行了对比。
+[TODO: 可能对一些metric 比如ratio max /min 做更具体的展示？]
+
+
+
+### 在 mismatch 小的情况下，IS 不会损害 Performance
+
+> Qwen3-4B 完整的 wandb log 参考[此处](https://wandb.ai/ch271828n-team/slime-dapo/reports/IS-Has-No-Harm--VmlldzoxNTE3NTM3MQ?accessToken=vbaw93cjkyi8d6iul7gzvccehf2ugff1cicfcmlaxjv88n875i0ip1ixqfr42s9b)。
+
+我们在 Qwen3-4B 的实验中，验证了启用 TIS/MIS（包括几种常用配置）并不会降低性能或破坏训练稳定性。为了证明这一点，我们在训练开始时启用了不同的 IS 相关选项，并将其与未进行 IS 修正的基线进行了对比。
 我们评估了以下四种配置：
 
 1.  Baseline（基线）
@@ -235,15 +240,24 @@ $$\mathcal{L}_{\text{PPO-decoupled}}(\theta)
     <em>左图：K3 KL 散度。右图：训练困惑度（PPL）。</em>
 </p>
 
-### IS 可以抑制 KL 增长
 
-为了测试 MIS (IS + RS + BN) 是否有效，我们从第 650 步继续训练，结果如下。可以看到，对于 Base Run（基线运行），KL 继续增加；但使用了 MIS 后，增长趋势被成功抑制并开始下降。
 
-<div align="center">
-  <img src="pics/is-kl-suppression.png" alt="IS Can Supress KL Increase" width="50%">
-</div>
+### 在 mismatch 大的情况下，TIS/MIS 可以解决崩溃
 
-⚠️：由于在学术界资源有限，目前我们的实验主要在小规模 dense model 上展开，得出的结论可能与大规模 MOE training 的结果有一定区别。请期待我们后续博客中与更多工业界伙伴的合作。
+> Qwen30B-A3B 的完整 wandb log 请看[此处](https://api.wandb.ai/links/peiranxu_org/5rx2wvfu) 
+>
+> ckpt 地址请看 此处 [TODO]
+
+在 Qwen30B-A3B 中，我们取 300 steps 的 ckpt 续训，在不同的 TIS/MIS setting 下进行续训。我们发现合理设置的 TIS + MIS 可以有效抑制因为 train-inference mismatch 导致的崩溃。我们在 4 组 setting 上进行了实验
+
+* config 1: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> 依然崩溃
+* config 2: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] + batch norm --> 未崩溃
+* config 3: token TIS [0.5, 2.0] + geometric MIS [0.99, 1.001] --> 未崩溃
+* config 4: token TIS [0.5, 2.0] --> 崩溃
+
+[TODO: add some pics]
+
+
 
 ## 使用指南
 
